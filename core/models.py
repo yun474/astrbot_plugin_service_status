@@ -14,6 +14,7 @@ class Service:
     theme: str
     uptime_source: str = ""
     component_names: dict[str, str] = field(default_factory=dict)
+    status_page_slug: str = ""
 
 
 @dataclass(frozen=True)
@@ -41,6 +42,8 @@ class Uptime:
     days: tuple[tuple[str, str], ...]
     percent: str = ""
     group: str = ""
+    period_label: str = ""
+    percent_label: str = "可用"
 
 
 @dataclass(frozen=True)

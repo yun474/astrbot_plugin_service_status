@@ -1,6 +1,6 @@
 name: astrbot_plugin_service_status
 display_name: 互联网服务状态
-desc: 查询 GPT、Claude 等服务的官方运行状态，生成主题图片，支持独立开关与中文展示。
+desc: 查询 GPT、Claude、SCP:SL 等服务的官方运行状态，生成主题图片，支持独立开关与中文展示。
 version: 0.1.0
 author: yun474
 repo: https://github.com/yun474/astrbot_plugin_service_status

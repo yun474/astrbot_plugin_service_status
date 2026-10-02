@@ -11,6 +11,7 @@ from .core.client import ADAPTERS, StatusClient
 from .core.registry import load_services
 from .core.renderer import render, visible_notices
 from .core.translation import EventTranslator
+from .core.uptime_kuma import StatusAccessError
 
 
 @register(
@@ -42,7 +43,7 @@ class ServiceStatusPlugin(Star):
         return max(low, min(high, int(self.config.get(key, default))))
 
     def _enabled(self, key):
-        return key in self.config.get("enabled_services", ["gpt", "claude"])
+        return key in self.config.get("enabled_services", ["gpt", "claude", "sl"])
 
     async def _cleanup(self, path):
         try:
@@ -120,6 +121,11 @@ class ServiceStatusPlugin(Star):
             self._cleanup_tasks.add(task)
             task.add_done_callback(self._cleanup_tasks.discard)
             return event.image_result(str(path))
+        except StatusAccessError:
+            return event.plain_result(
+                f"{service.name} 官方状态接口需要浏览器验证或暂时拒绝访问，无法自动读取。"
+                f"这不代表游戏服务故障。\n请打开官方状态页：{service.url}"
+            )
         except Exception:
             logger.exception("服务状态：%s 查询或渲染失败", service.name)
             return event.plain_result(
@@ -135,6 +141,11 @@ class ServiceStatusPlugin(Star):
     async def claude_status(self, event: AstrMessageEvent):
         """查看 Claude 官方服务状态。"""
         yield await self._query(event, "claude")
+
+    @filter.command("sl状态")
+    async def sl_status(self, event: AstrMessageEvent):
+        """查看 SCP:SL / Northwood 官方服务状态。"""
+        yield await self._query(event, "sl")
 
     @filter.command("服务状态")
     async def service_status(self, event: AstrMessageEvent, name: str = ""):

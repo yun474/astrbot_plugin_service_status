@@ -1,0 +1,23 @@
+{
+  "id": "sl",
+  "name": "SCP: Secret Laboratory",
+  "subtitle": "Northwood Studios · 官方服务监测",
+  "command": "sl状态",
+  "aliases": [],
+  "url": "https://status.scpslgame.com",
+  "adapter": "uptime_kuma",
+  "theme": "northwood",
+  "status_page_slug": "nw",
+  "component_names": {
+    "Central Servers": "中央服务器",
+    "3rd Party Services": "第三方服务",
+    "Official Game Servers": "官方游戏服务器",
+    "Auto Verification Service": "自动验证服务",
+    "Internal Servers": "内部服务器",
+    "Steam Authentication API": "Steam 登录验证",
+    "Roubaix 1": "鲁贝 1", "Strasbourg 1": "斯特拉斯堡 1",
+    "Beauharnois 1": "博阿尔努瓦 1", "Limburg 1": "林堡 1", "Limburg 2": "林堡 2",
+    "Warsaw 1": "华沙 1", "Warsaw 2": "华沙 2",
+    "Gravelines 3": "格拉沃利讷 3", "Gravelines 4": "格拉沃利讷 4"
+  }
+}

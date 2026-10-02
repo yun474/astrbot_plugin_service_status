@@ -6,8 +6,9 @@ import aiohttp
 
 from .statuspage import StatuspageAdapter
 from .uptime import fetch_uptime
+from .uptime_kuma import UptimeKumaAdapter
 
-ADAPTERS = {"statuspage": StatuspageAdapter}
+ADAPTERS = {"statuspage": StatuspageAdapter, "uptime_kuma": UptimeKumaAdapter}
 
 
 class StatusClient:
@@ -16,7 +17,14 @@ class StatusClient:
         self._locks = {}
 
     async def fetch(self, service, timeout=15, cache_seconds=60, proxy="", show_uptime=True):
-        key = (service.id, service.url, service.adapter, proxy, show_uptime)
+        key = (
+            service.id,
+            service.url,
+            service.adapter,
+            service.status_page_slug,
+            proxy,
+            show_uptime,
+        )
         lock = self._locks.setdefault(key, asyncio.Lock())
         async with lock:
             cached = self._cache.get(key)
@@ -41,6 +49,8 @@ class StatusClient:
                     ):
                         uptime = {}
                     snapshot = replace(snapshot, uptime=uptime)
+                if not show_uptime:
+                    snapshot = replace(snapshot, uptime={})
             self._cache[key] = (time.monotonic(), snapshot)
             return snapshot
 

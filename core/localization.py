@@ -1,6 +1,9 @@
 from datetime import datetime, timedelta, timezone
 
 STATES = {
+    "unavailable": ("不可用", "bad"),
+    "pending": ("等待确认", "warn"),
+    "notice": ("官方公告", "info"),
     "operational": ("运行正常", "ok"),
     "degraded_performance": ("性能下降", "warn"),
     "partial_outage": ("部分中断", "bad"),
@@ -17,6 +20,8 @@ STATES = {
     "completed": ("维护完成", "ok"),
 }
 INDICATORS = {
+    "partial_down": ("部分监控报告异常", "warn"),
+    "all_down": ("全部监控报告异常", "bad"),
     "none": ("所有系统运行正常", "ok"),
     "minor": ("部分服务出现异常", "warn"),
     "major": ("服务出现较大故障", "bad"),

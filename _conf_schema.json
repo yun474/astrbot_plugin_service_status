@@ -1,5 +1,5 @@
 {
-  "enabled_services": {"description": "启用的状态服务", "type": "list", "default": ["gpt", "claude"], "hint": "填写 services 目录中的服务 ID。删除某项即可停用该服务，停用后不会请求接口或调用翻译。"},
+  "enabled_services": {"description": "启用的状态服务", "type": "list", "default": ["gpt", "claude", "sl"], "hint": "可选 gpt、claude、sl 等 services 目录中的服务 ID。旧配置要手动加入 sl 才会启用 SCP:SL。删除某项即可停用。"},
   "request_timeout": {"description": "官方接口请求超时（秒）", "type": "int", "default": 15, "hint": "范围 3～60。"},
   "cache_seconds": {"description": "官方数据缓存（秒）", "type": "int", "default": 60, "hint": "范围 0～3600，0 表示关闭缓存。"},
   "proxy_url": {"description": "HTTP 代理", "type": "string", "default": "", "hint": "留空使用环境代理；例如 http://127.0.0.1:7890。"},
@@ -7,7 +7,7 @@
   "show_incidents": {"description": "展示当前事件", "type": "bool", "default": true},
   "show_maintenance": {"description": "展示计划维护", "type": "bool", "default": true},
   "show_history": {"description": "展示近期已解决事件", "type": "bool", "default": true},
-  "show_uptime": {"description": "展示官方历史状态条", "type": "bool", "default": true, "hint": "获取官方逐日历史；获取不到时明确提示，不生成虚构的正常记录。"},
+  "show_uptime": {"description": "展示官方历史状态条", "type": "bool", "default": true, "hint": "GPT / Claude 展示逐日历史；SCP:SL 展示近期探测记录。缺失数据不生成虚构的正常记录。"},
   "history_count": {"description": "近期事件条数", "type": "int", "default": 2, "hint": "范围 1～5。"},
   "llm_translate_events": {"description": "用当前会话模型翻译事件详情", "type": "bool", "default": false, "hint": "可选，会产生模型请求。状态、组件名称始终使用内置中文；关闭或翻译失败时保留事件原文。"},
   "translation_timeout": {"description": "翻译超时（秒）", "type": "int", "default": 25, "hint": "范围 5～60。"}

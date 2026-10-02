@@ -99,7 +99,7 @@ def visible_notices(snapshot, config):
     if config.get("show_incidents", True):
         sections.append(
             (
-                "当前事件",
+                "当前公告与事件",
                 snapshot.incidents[:MAX_ACTIVE],
                 snapshot.incidents_known,
                 len(snapshot.incidents),
@@ -110,7 +110,7 @@ def visible_notices(snapshot, config):
     ):
         sections.append(
             (
-                "计划维护",
+                "维护信息",
                 snapshot.maintenance[:MAX_ACTIVE],
                 snapshot.maintenance_known,
                 len(snapshot.maintenance),
@@ -141,10 +141,14 @@ def render(snapshot, path, config):
             angle = i * math.pi / 6
             x, y = 78 + 23 * math.cos(angle), 76 + 23 * math.sin(angle)
             c.ops.append(("line", ((78, 76, x, y),), {"fill": accent, "width": 5}))
+    elif theme["brand_style"] == "monitor":
+        c.rect((53, 53, 101, 101), theme["tint"], 24)
+        c.rect((66, 66, 88, 88), accent, 11)
     else:
         c.rect((53, 53, 101, 101), ink, 14)
         c.text((65, 59), "O", 32, "#FFFFFF")
-    c.text((119, 49), service.name, 42)
+    brand_size = 42 if c.font(42).getlength(service.name) <= 600 else 32
+    c.text((119, 49), c.fit(service.name, 600, brand_size), brand_size)
     c.text((120, 104), service.subtitle, 18, muted)
     c.text((756, 57), "服务运行报告", 21, accent)
     c.text((756, 91), display_time(snapshot.checked_at), 19, muted)
@@ -159,7 +163,7 @@ def render(snapshot, path, config):
     c.text((50, y), "系统状态", 26)
     c.text((742, y + 5), "组件状态 / 官方历史", 18, muted)
     y += 49
-    columns = 2 if len(snapshot.components) > 8 else 1
+    columns = theme.get("columns", 2 if len(snapshot.components) > 8 else 1)
     width = (904 - (columns - 1) * 16) // columns
     row_heights = []
     for index, component in enumerate(snapshot.components):
@@ -185,10 +189,12 @@ def render(snapshot, path, config):
             for i, (_, day_tone) in enumerate(days):
                 left = x + 20 + i * step
                 c.rect((left, y + 79, left + max(1, step - 2), y + 99), COLORS[day_tone], 1)
-            period = f"{days[0][0][5:]} — {days[-1][0][5:]} · UTC"
-            c.text((x + 20, y + 109), period, 14, muted)
+            period = uptime.period_label or f"{days[0][0][5:]} — {days[-1][0][5:]} · UTC"
+            percent_text = f"{uptime.percent}% {uptime.percent_label}" if uptime.percent else ""
+            period_width = width - 45 - c.font(14).getlength(percent_text)
+            c.text((x + 20, y + 109), c.fit(period, period_width, 14), 14, muted)
             if uptime.percent:
-                text = f"{uptime.percent}% 可用"
+                text = percent_text
                 c.text((x + width - 20 - c.font(14).getlength(text), y + 109), text, 14, muted)
         elif config.get("show_uptime", True):
             c.text((x + width - 135, y + 53), "历史暂不可用", 15, muted)
@@ -200,7 +206,7 @@ def render(snapshot, path, config):
         for i, (key, label) in enumerate(
             (
                 ("ok", "正常"),
-                ("warn", "性能下降"),
+                ("warn", "异常 / 待确认"),
                 ("bad", "中断"),
                 ("info", "维护"),
                 ("unknown", "无数据"),
@@ -218,7 +224,7 @@ def render(snapshot, path, config):
         c.text((52, y), heading, 25)
         y += 46
         if not notices:
-            text = "暂无未解决事件" if heading == "当前事件" else "暂无记录"
+            text = "官方当前未列出公告或事件" if heading == "当前公告与事件" else "暂无记录"
             if not known:
                 text = "官方未提供此数据或接口暂不可用"
             c.rect((48, y, 952, y + 62), theme["surface"], 14)
