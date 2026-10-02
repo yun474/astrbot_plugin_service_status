@@ -1,14 +1,119 @@
 {
-  "enabled_services": {"description": "启用的状态服务", "type": "list", "default": ["gpt", "claude", "ds"], "hint": "可选 gpt、claude、ds 等 services 目录中的服务 ID。删除某项即可停用；旧配置需手动加入 ds。"},
-  "request_timeout": {"description": "官方接口请求超时（秒）", "type": "int", "default": 15, "hint": "范围 3～60。"},
-  "cache_seconds": {"description": "官方数据缓存（秒）", "type": "int", "default": 60, "hint": "范围 0～3600，0 表示关闭缓存。"},
-  "proxy_url": {"description": "HTTP 代理", "type": "string", "default": "", "hint": "留空使用环境代理；例如 http://127.0.0.1:7890。"},
-  "font_path": {"description": "中文字体路径", "type": "string", "default": "", "hint": "留空查找系统中文字体。Linux 推荐安装 Noto Sans CJK，或指定可读的 ttf / otf / ttc 文件。"},
-  "show_incidents": {"description": "展示当前事件", "type": "bool", "default": true},
-  "show_maintenance": {"description": "展示计划维护", "type": "bool", "default": true},
-  "show_history": {"description": "展示近期已解决事件", "type": "bool", "default": true},
-  "show_uptime": {"description": "展示官方历史状态条", "type": "bool", "default": true, "hint": "GPT / Claude 展示逐日历史；缺失数据不生成虚构的正常记录。"},
-  "history_count": {"description": "近期事件条数", "type": "int", "default": 2, "hint": "范围 1～5。"},
-  "llm_translate_events": {"description": "用当前会话模型翻译事件详情", "type": "bool", "default": false, "hint": "可选，会产生模型请求。状态、组件名称始终使用内置中文；关闭或翻译失败时保留事件原文。"},
-  "translation_timeout": {"description": "翻译超时（秒）", "type": "int", "default": 25, "hint": "范围 5～60。"}
+  "enabled_services": {
+    "description": "选择要启用的服务",
+    "type": "list",
+    "default": [
+      "gpt",
+      "claude",
+      "ds"
+    ],
+    "hint": "勾选即可启用，取消勾选即可停用；全部取消将关闭所有查询。升级后可直接勾选 DeepSeek。",
+    "options": [
+      "gpt",
+      "claude",
+      "ds"
+    ],
+    "labels": [
+      "OpenAI / GPT",
+      "Claude",
+      "DeepSeek"
+    ],
+    "render_type": "checkbox",
+    "obvious_hint": true
+  },
+  "show_incidents": {
+    "description": "显示当前故障与公告",
+    "type": "bool",
+    "default": true,
+    "hint": "在状态卡中展示官方正在跟进的事件。关闭后仍会显示组件运行状态。"
+  },
+  "show_maintenance": {
+    "description": "显示维护安排",
+    "type": "bool",
+    "default": true,
+    "hint": "展示官方计划中或正在进行的维护。"
+  },
+  "show_history": {
+    "description": "显示近期已解决事件",
+    "type": "bool",
+    "default": true,
+    "hint": "在状态卡底部展示近期已解决的故障。"
+  },
+  "history_count": {
+    "description": "近期事件显示条数",
+    "type": "int",
+    "default": 2,
+    "hint": "默认显示 2 条；条数越多，图片越长。",
+    "options": [
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "condition": {
+      "show_history": true
+    }
+  },
+  "show_uptime": {
+    "description": "显示逐日历史状态条",
+    "type": "bool",
+    "default": true,
+    "hint": "目前支持 GPT 和 Claude，DeepSeek 暂未接入。关闭后不额外请求历史条数据。"
+  },
+  "llm_translate_events": {
+    "description": "自动翻译事件详情",
+    "type": "bool",
+    "default": false,
+    "hint": "使用当前会话的模型翻译公告，会产生模型请求。默认关闭，保留官方原文；状态标签和已知组件名称始终中文显示。",
+    "obvious_hint": true
+  },
+  "translation_timeout": {
+    "description": "翻译最多等待多少秒",
+    "type": "int",
+    "default": 25,
+    "hint": "默认 25 秒；超时后直接展示官方原文。",
+    "slider": {
+      "min": 5,
+      "max": 60,
+      "step": 1
+    },
+    "condition": {
+      "llm_translate_events": true
+    }
+  },
+  "cache_seconds": {
+    "description": "状态数据缓存时长（秒）",
+    "type": "int",
+    "default": 60,
+    "hint": "默认 60 秒，同一服务在此期间复用结果。设为 0 则每次重新查询；图片时间保留实际获取时间。",
+    "slider": {
+      "min": 0,
+      "max": 3600,
+      "step": 1
+    }
+  },
+  "request_timeout": {
+    "description": "查询最多等待多少秒",
+    "type": "int",
+    "default": 15,
+    "hint": "默认 15 秒；网络较慢时可适当调大。",
+    "slider": {
+      "min": 3,
+      "max": 60,
+      "step": 1
+    }
+  },
+  "proxy_url": {
+    "description": "网络代理地址（可选）",
+    "type": "string",
+    "default": "",
+    "hint": "通常留空即可，会使用系统环境代理。需要指定时填写 HTTP 代理地址，例如 http://127.0.0.1:7890。"
+  },
+  "font_path": {
+    "description": "中文字体路径（可选）",
+    "type": "string",
+    "default": "",
+    "hint": "通常留空，自动查找系统字体。图片缺字时再填写机器人所在机器上的 ttf / otf / ttc 文件路径；Linux 可安装 fonts-noto-cjk。"
+  }
 }

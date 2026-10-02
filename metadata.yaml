@@ -4,4 +4,4 @@ desc: 查询 GPT、Claude、DeepSeek 等服务的官方运行状态，生成主�
 version: 0.1.2
 author: yun474
 repo: https://github.com/yun474/astrbot_plugin_service_status
-astrbot_version: ">=3.4.34"
+astrbot_version: ">=4.0.0"
