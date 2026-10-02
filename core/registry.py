@@ -19,10 +19,6 @@ def load_services(directory: Path) -> dict[str, Service]:
             raise ValueError(f"重复服务 ID: {service.id}")
         if not re.fullmatch(r"[a-z][a-z0-9_]*", service.theme):
             raise ValueError(f"{path.name}: 主题名无效")
-        if service.adapter == "uptime_kuma" and not re.fullmatch(
-            r"[a-z0-9_-]+", service.status_page_slug
-        ):
-            raise ValueError(f"{path.name}: Uptime Kuma 状态页标识无效")
         url = urlsplit(service.url)
         if url.scheme != "https" or not url.netloc or url.query or url.fragment:
             raise ValueError(f"{path.name}: 请填写官方 HTTPS 状态页地址")

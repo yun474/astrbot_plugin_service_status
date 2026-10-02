@@ -6,9 +6,8 @@ import aiohttp
 
 from .statuspage import StatuspageAdapter
 from .uptime import fetch_uptime
-from .uptime_kuma import UptimeKumaAdapter
 
-ADAPTERS = {"statuspage": StatuspageAdapter, "uptime_kuma": UptimeKumaAdapter}
+ADAPTERS = {"statuspage": StatuspageAdapter}
 
 
 class StatusClient:
@@ -21,7 +20,6 @@ class StatusClient:
             service.id,
             service.url,
             service.adapter,
-            service.status_page_slug,
             proxy,
             show_uptime,
         )

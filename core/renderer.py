@@ -65,11 +65,18 @@ class Canvas:
 
     def fit(self, text, width, size=22):
         font = self.font(size)
+        # 官方字段也可能异常超长，限制字体测量的输入和次数。
+        text = str(text)[:4096]
         if font.getlength(text) <= width:
             return text
-        while text and font.getlength(text + "…") > width:
-            text = text[:-1]
-        return text + "…"
+        low, high = 0, len(text)
+        while low < high:
+            middle = (low + high + 1) // 2
+            if font.getlength(text[:middle] + "…") <= width:
+                low = middle
+            else:
+                high = middle - 1
+        return text[:low] + "…"
 
     def wrap(self, text, width, size=22, limit=5):
         lines, current = [], ""
@@ -77,6 +84,8 @@ class Canvas:
             if char == "\n" or self.font(size).getlength(current + char) > width:
                 lines.append(current)
                 current = "" if char == "\n" else char
+                if len(lines) > limit:
+                    break
             else:
                 current += char
         if current:
@@ -87,11 +96,16 @@ class Canvas:
         return lines
 
     def save(self, path, height):
+        if height > 30000:
+            raise ValueError("状态图片过高，官方组件数量异常")
         image = Image.new("RGB", (1000, height), self.theme["background"])
-        draw = ImageDraw.Draw(image)
-        for method, args, kwargs in self.ops:
-            getattr(draw, method)(*args, **kwargs)
-        image.save(path, "PNG", optimize=True)
+        try:
+            draw = ImageDraw.Draw(image)
+            for method, args, kwargs in self.ops:
+                getattr(draw, method)(*args, **kwargs)
+            image.save(path, "PNG", optimize=True)
+        finally:
+            image.close()
 
 
 def visible_notices(snapshot, config):

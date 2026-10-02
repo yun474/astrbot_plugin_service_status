@@ -1,5 +1,6 @@
 import asyncio
 import tempfile
+import time
 from dataclasses import replace
 from pathlib import Path
 
@@ -11,14 +12,13 @@ from .core.client import ADAPTERS, StatusClient
 from .core.registry import load_services
 from .core.renderer import render, visible_notices
 from .core.translation import EventTranslator
-from .core.uptime_kuma import StatusAccessError
 
 
 @register(
     "astrbot_plugin_service_status",
     "yun474",
     "互联网服务官方状态查询",
-    "0.1.0",
+    "0.1.1",
     "https://github.com/yun474/astrbot_plugin_service_status",
 )
 class ServiceStatusPlugin(Star):
@@ -34,8 +34,10 @@ class ServiceStatusPlugin(Star):
         self.client = StatusClient()
         self.translator = EventTranslator()
         self._render_limit = asyncio.Semaphore(2)
-        self._cleanup_tasks = set()
+        self._cleanup_task = None
+        self._images = {}
         self._render_tasks = set()
+        self._query_tasks = set()
         self._closing = False
         self._temp_dir = tempfile.TemporaryDirectory(prefix="astrbot_service_status_")
 
@@ -43,13 +45,24 @@ class ServiceStatusPlugin(Star):
         return max(low, min(high, int(self.config.get(key, default))))
 
     def _enabled(self, key):
-        return key in self.config.get("enabled_services", ["gpt", "claude", "sl"])
+        return key in self.config.get("enabled_services", ["gpt", "claude"])
 
-    async def _cleanup(self, path):
-        try:
-            await asyncio.sleep(180)
-        finally:
-            path.unlink(missing_ok=True)
+    async def _cleanup(self):
+        while True:
+            await asyncio.sleep(60)
+            self._cleanup_expired()
+
+    def _cleanup_expired(self):
+        now = time.monotonic()
+        for path, created_at in tuple(self._images.items()):
+            if now - created_at < 180:
+                continue
+            try:
+                path.unlink(missing_ok=True)
+            except OSError:
+                logger.warning("服务状态：临时图片清理失败，下次扫描重试", exc_info=True)
+            else:
+                del self._images[path]
 
     async def _translate(self, snapshot, event):
         if not self.config.get("llm_translate_events", False):
@@ -79,58 +92,68 @@ class ServiceStatusPlugin(Star):
             return snapshot
 
     async def _query(self, event, key):
+        if self._closing:
+            return event.plain_result("状态插件正在重载，请稍后重试。")
         service = self.services.get(key)
         if service is None:
             return event.plain_result("未找到这个状态服务，请使用 /服务状态 查看列表。")
         if not self._enabled(key):
             return event.plain_result(f"{service.name} 状态查询已停用。")
+        # 不让刷指令无限堆积网络、翻译和渲染任务。
+        if len(self._query_tasks) >= 4:
+            return event.plain_result("状态查询繁忙，请稍后重试。")
+        task = asyncio.create_task(self._query_service(event, service))
+        self._query_tasks.add(task)
         try:
-            snapshot = await self.client.fetch(
-                service,
-                timeout=self._number("request_timeout", 15, 3, 60),
-                cache_seconds=self._number("cache_seconds", 60, 0, 3600),
-                proxy=str(self.config.get("proxy_url", "")).strip(),
-                show_uptime=bool(self.config.get("show_uptime", True)),
-            )
-            snapshot = await self._translate(snapshot, event)
-            async with self._render_limit:
-                if self._closing:
-                    return event.plain_result("状态插件正在重载，请稍后重试。")
-                with tempfile.NamedTemporaryFile(
-                    suffix=".png", dir=self._temp_dir.name, delete=False
-                ) as file:
-                    path = Path(file.name)
-                worker = asyncio.create_task(asyncio.to_thread(render, snapshot, path, self.config))
-                self._render_tasks.add(worker)
-                try:
-                    await asyncio.shield(worker)
-                except asyncio.CancelledError:
-                    # to_thread 无法中断；等写入结束再删文件，避免卸载后留下文件。
-                    await asyncio.gather(worker, return_exceptions=True)
-                    path.unlink(missing_ok=True)
-                    raise
-                except BaseException:
-                    path.unlink(missing_ok=True)
-                    raise
-                finally:
-                    self._render_tasks.discard(worker)
+            return await task
+        finally:
+            self._query_tasks.discard(task)
+
+    async def _build_card(self, event, service, path):
+        snapshot = await self.client.fetch(
+            service,
+            timeout=self._number("request_timeout", 15, 3, 60),
+            cache_seconds=self._number("cache_seconds", 60, 0, 3600),
+            proxy=str(self.config.get("proxy_url", "")).strip(),
+            show_uptime=bool(self.config.get("show_uptime", True)),
+        )
+        snapshot = await self._translate(snapshot, event)
+        async with self._render_limit:
+            worker = asyncio.create_task(asyncio.to_thread(render, snapshot, path, self.config))
+            self._render_tasks.add(worker)
+            try:
+                await asyncio.shield(worker)
+            except asyncio.CancelledError:
+                # to_thread 无法中断；等写入结束再删文件。
+                await asyncio.gather(worker, return_exceptions=True)
+                raise
+            finally:
+                self._render_tasks.discard(worker)
+
+    async def _query_service(self, event, service):
+        path = None
+        try:
+            with tempfile.NamedTemporaryFile(
+                suffix=".png", dir=self._temp_dir.name, delete=False
+            ) as file:
+                path = Path(file.name)
+            await self._build_card(event, service, path)
             if self._closing:
-                path.unlink(missing_ok=True)
                 return event.plain_result("状态插件正在重载，请稍后重试。")
-            task = asyncio.create_task(self._cleanup(path))
-            self._cleanup_tasks.add(task)
-            task.add_done_callback(self._cleanup_tasks.discard)
-            return event.image_result(str(path))
-        except StatusAccessError:
-            return event.plain_result(
-                f"{service.name} 官方状态接口需要浏览器验证或暂时拒绝访问，无法自动读取。"
-                f"这不代表游戏服务故障。\n请打开官方状态页：{service.url}"
-            )
+            result = event.image_result(str(path))
+            self._images[path] = time.monotonic()
+            if self._cleanup_task is None:
+                self._cleanup_task = asyncio.create_task(self._cleanup())
+            path = None  # 清理由延时任务接管。
+            return result
         except Exception:
             logger.exception("服务状态：%s 查询或渲染失败", service.name)
             return event.plain_result(
                 f"{service.name} 状态查询暂时失败，请稍后重试。\n官方状态页：{service.url}"
             )
+        finally:
+            if path is not None:
+                path.unlink(missing_ok=True)
 
     @filter.command("gpt状态")
     async def gpt_status(self, event: AstrMessageEvent):
@@ -141,11 +164,6 @@ class ServiceStatusPlugin(Star):
     async def claude_status(self, event: AstrMessageEvent):
         """查看 Claude 官方服务状态。"""
         yield await self._query(event, "claude")
-
-    @filter.command("sl状态")
-    async def sl_status(self, event: AstrMessageEvent):
-        """查看 SCP:SL / Northwood 官方服务状态。"""
-        yield await self._query(event, "sl")
 
     @filter.command("服务状态")
     async def service_status(self, event: AstrMessageEvent, name: str = ""):
@@ -164,11 +182,17 @@ class ServiceStatusPlugin(Star):
 
     async def terminate(self):
         self._closing = True
-        await asyncio.gather(*self._render_tasks, return_exceptions=True)
-        for task in tuple(self._cleanup_tasks):
+        tasks = tuple(self._query_tasks)
+        for task in tasks:
             task.cancel()
-        await asyncio.gather(*self._cleanup_tasks, return_exceptions=True)
-        self._cleanup_tasks.clear()
+        await asyncio.gather(*tasks, return_exceptions=True)
+        self._query_tasks.clear()
+        await asyncio.gather(*self._render_tasks, return_exceptions=True)
+        if self._cleanup_task is not None:
+            self._cleanup_task.cancel()
+            await asyncio.gather(self._cleanup_task, return_exceptions=True)
+            self._cleanup_task = None
+        self._images.clear()
         self.client.clear()
         self.translator.cache.clear()
         self._temp_dir.cleanup()
