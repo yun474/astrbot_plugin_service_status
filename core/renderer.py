@@ -37,16 +37,29 @@ def find_font(custom=""):
     raise ValueError("未找到中文字体，请安装 Noto Sans CJK 或配置 font_path")
 
 
+def find_font_index(path):
+    with open(path, "rb") as font_file:
+        header = font_file.read(12)
+    if header[:4] == b"ttcf":
+        count = int.from_bytes(header[8:12], "big")
+        for index in range(count):
+            font = ImageFont.truetype(path, 20, index=index)
+            if font.getname()[0].endswith(" SC"):
+                return index
+    return 0
+
+
 class Canvas:
     def __init__(self, theme, font_path):
         self.theme = theme
         self.font_path = find_font(font_path)
+        self.font_index = find_font_index(self.font_path)
         self.fonts = {}
         self.ops = []
 
     def font(self, size):
         if size not in self.fonts:
-            self.fonts[size] = ImageFont.truetype(self.font_path, size)
+            self.fonts[size] = ImageFont.truetype(self.font_path, size, index=self.font_index)
         return self.fonts[size]
 
     def text(self, xy, text, size=22, color=None):

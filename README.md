@@ -32,7 +32,7 @@
 
 1. 在 AstrBot 管理面板通过仓库链接 `https://github.com/yun474/astrbot_plugin_service_status` 安装；也可将插件放进 `data/plugins/astrbot_plugin_service_status`，或上传插件压缩包。
 2. 由 AstrBot 安装 `requirements.txt`；手动部署也可在 AstrBot 的 Python 环境执行 `python -m pip install -r requirements.txt`。
-3. 确保系统有中文字体。Windows 自动使用微软雅黑；Linux 推荐 `fonts-noto-cjk`，也可在 `font_path` 指定自己的字体文件。不附带商业字体。
+3. 确保系统有中文字体。Windows 自动使用微软雅黑；Linux 推荐 `fonts-noto-cjk`，也可在 `font_path` 指定自己的字体文件。多语言字体集合（如 Noto CJK、苹方）优先选择简体中文（SC）字形，未包含 SC 字体时使用集合中的默认字体。不附带商业字体。
 4. 重载插件，在配置页启用服务，发送上述指令。若装有旧 GPT / Claude 插件，先停用旧插件，避免指令冲突。
 
 使用 Pillow 本地生成 PNG，图片渲染不需要 Chromium、浏览器驱动或外部图片渲染服务。每次保存结束（包括失败）显式关闭 Pillow 图片，释放像素内存。临时图片生成后保留至少 180 秒供平台发送，由一个异步任务每 60 秒扫描并删除过期图片（通常在生成后 180～240 秒清理）；文件被占用时下次扫描重试，插件卸载时立即清空临时目录。没有持久化业务数据。
