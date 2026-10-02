@@ -1,0 +1,20 @@
+{
+  "id": "gpt",
+  "name": "OpenAI",
+  "subtitle": "ChatGPT · API · Codex",
+  "command": "gpt状态",
+  "aliases": [],
+  "url": "https://status.openai.com",
+  "adapter": "statuspage",
+  "theme": "openai",
+  "uptime_source": "incident_io",
+  "component_names": {
+    "Chat Completions": "对话补全", "Responses": "Responses 接口", "Agents": "智能体", "Decisions": "决策",
+    "Fine-tuning": "模型微调", "Embeddings": "文本嵌入", "Images": "图像接口", "Batch": "批处理",
+    "Audio": "音频接口", "Moderations": "内容审核", "Realtime": "实时接口", "Files": "文件接口",
+    "Login": "登录", "Conversations": "对话", "Compliance API": "合规接口", "Search": "搜索",
+    "File uploads": "文件上传", "Voice mode": "语音模式", "Image Generation": "图像生成", "Deep Research": "深度研究",
+    "Agent": "智能体", "Codex in ChatGPT Desktop": "桌面端 Codex", "Connectors/Apps": "连接器与应用",
+    "VS Code extension": "VS Code 扩展", "Ads Manager": "广告管理", "Ads API": "广告接口"
+  }
+}

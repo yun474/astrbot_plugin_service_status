@@ -1,0 +1,18 @@
+{
+  "id": "claude",
+  "name": "Claude",
+  "subtitle": "Anthropic · Claude 服务状态",
+  "command": "claude状态",
+  "aliases": [],
+  "url": "https://status.claude.com",
+  "adapter": "statuspage",
+  "theme": "claude",
+  "uptime_source": "statuspage",
+  "component_names": {
+    "claude.ai": "Claude 网页与客户端",
+    "Claude Console (platform.claude.com)": "Claude 开发者控制台",
+    "Claude Console (console.anthropic.com)": "Claude 开发者控制台",
+    "Claude API (api.anthropic.com)": "Claude API",
+    "Claude Code": "Claude Code", "Claude Cowork": "Claude Cowork", "Claude for Government": "Claude 政府版"
+  }
+}
