@@ -4,10 +4,11 @@ from dataclasses import replace
 
 import aiohttp
 
+from .flashduty import FlashdutyAdapter
 from .statuspage import StatuspageAdapter
 from .uptime import fetch_uptime
 
-ADAPTERS = {"statuspage": StatuspageAdapter}
+ADAPTERS = {"statuspage": StatuspageAdapter, "flashduty": FlashdutyAdapter}
 
 
 class StatusClient:

@@ -18,7 +18,7 @@ from .core.translation import EventTranslator
     "astrbot_plugin_service_status",
     "yun474",
     "互联网服务官方状态查询",
-    "0.1.1",
+    "0.1.2",
     "https://github.com/yun474/astrbot_plugin_service_status",
 )
 class ServiceStatusPlugin(Star):
@@ -45,7 +45,7 @@ class ServiceStatusPlugin(Star):
         return max(low, min(high, int(self.config.get(key, default))))
 
     def _enabled(self, key):
-        return key in self.config.get("enabled_services", ["gpt", "claude"])
+        return key in self.config.get("enabled_services", ["gpt", "claude", "ds"])
 
     async def _cleanup(self):
         while True:
@@ -164,6 +164,11 @@ class ServiceStatusPlugin(Star):
     async def claude_status(self, event: AstrMessageEvent):
         """查看 Claude 官方服务状态。"""
         yield await self._query(event, "claude")
+
+    @filter.command("ds状态")
+    async def ds_status(self, event: AstrMessageEvent):
+        """查看 DeepSeek 官方服务状态。"""
+        yield await self._query(event, "ds")
 
     @filter.command("服务状态")
     async def service_status(self, event: AstrMessageEvent, name: str = ""):

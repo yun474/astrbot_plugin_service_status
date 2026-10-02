@@ -160,7 +160,7 @@ def render(snapshot, path, config):
         c.rect((66, 66, 88, 88), accent, 11)
     else:
         c.rect((53, 53, 101, 101), ink, 14)
-        c.text((65, 59), "O", 32, "#FFFFFF")
+        c.text((65, 59), service.name[:1], 32, "#FFFFFF")
     brand_size = 42 if c.font(42).getlength(service.name) <= 600 else 32
     c.text((119, 49), c.fit(service.name, 600, brand_size), brand_size)
     c.text((120, 104), service.subtitle, 18, muted)

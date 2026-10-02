@@ -17,6 +17,8 @@ def load_services(directory: Path) -> dict[str, Service]:
             raise ValueError(f"{path.name}: 服务 ID 必须为小写字母、数字或下划线")
         if service.id in services:
             raise ValueError(f"重复服务 ID: {service.id}")
+        if service.adapter == "flashduty" and not re.fullmatch(r"[0-9]+", service.page_id):
+            raise ValueError(f"{path.name}: Flashduty page_id 必须为数字字符串")
         if not re.fullmatch(r"[a-z][a-z0-9_]*", service.theme):
             raise ValueError(f"{path.name}: 主题名无效")
         url = urlsplit(service.url)

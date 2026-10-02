@@ -14,6 +14,7 @@ class Service:
     theme: str
     uptime_source: str = ""
     component_names: dict[str, str] = field(default_factory=dict)
+    page_id: str = ""
 
 
 @dataclass(frozen=True)

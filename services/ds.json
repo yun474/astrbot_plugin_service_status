@@ -1,0 +1,19 @@
+{
+  "id": "ds",
+  "name": "DeepSeek",
+  "subtitle": "深度求索 · API · 对话服务",
+  "command": "ds状态",
+  "aliases": [],
+  "url": "https://status.deepseek.com",
+  "adapter": "flashduty",
+  "page_id": "6410630422455",
+  "theme": "deepseek",
+  "component_names": {
+    "DeepSeek V4 Pro API服务(API Service)": "DeepSeek V4 Pro API",
+    "DeepSeek V4.1 Flash API服务(API Service)": "DeepSeek V4.1 Flash API",
+    "对话服务(Chat Service)": "对话服务",
+    "对话服务(Chatservice)": "网页与客户端对话",
+    "上传文件服务(File Upload Service)": "文件上传",
+    "搜索服务(Search Service)": "联网搜索"
+  }
+}

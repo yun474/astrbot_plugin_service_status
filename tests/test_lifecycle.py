@@ -59,6 +59,20 @@ class LifecycleTests(unittest.IsolatedAsyncioTestCase):
         self.assertIn("重载", await self.plugin._query(self.event, "gpt"))
         self.plugin.client.fetch.assert_not_awaited()
 
+    async def test_deepseek_command_respects_existing_enable_list(self):
+        self.plugin.client.fetch = AsyncMock(return_value=object())
+        self.plugin.config["enabled_services"] = ["gpt", "claude"]
+        results = [r async for r in self.plugin.ds_status(self.event)]
+        self.assertIn("已停用", results[0])
+        self.plugin.client.fetch.assert_not_awaited()
+        self.plugin.config["enabled_services"].append("ds")
+        with patch.object(
+            PLUGIN, "render", lambda snapshot, path, config: path.write_bytes(b"png")
+        ):
+            results = [r async for r in self.plugin.ds_status(self.event)]
+        self.assertTrue(Path(results[0]).exists())
+        self.assertEqual(self.plugin.client.fetch.call_args.args[0].id, "ds")
+
     async def test_terminate_cancels_active_fetch_and_removes_directory(self):
         started = asyncio.Event()
 

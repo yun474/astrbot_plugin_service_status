@@ -1,5 +1,5 @@
 {
-  "enabled_services": {"description": "启用的状态服务", "type": "list", "default": ["gpt", "claude"], "hint": "可选 gpt、claude 等 services 目录中的服务 ID。删除某项即可停用。"},
+  "enabled_services": {"description": "启用的状态服务", "type": "list", "default": ["gpt", "claude", "ds"], "hint": "可选 gpt、claude、ds 等 services 目录中的服务 ID。删除某项即可停用；旧配置需手动加入 ds。"},
   "request_timeout": {"description": "官方接口请求超时（秒）", "type": "int", "default": 15, "hint": "范围 3～60。"},
   "cache_seconds": {"description": "官方数据缓存（秒）", "type": "int", "default": 60, "hint": "范围 0～3600，0 表示关闭缓存。"},
   "proxy_url": {"description": "HTTP 代理", "type": "string", "default": "", "hint": "留空使用环境代理；例如 http://127.0.0.1:7890。"},
